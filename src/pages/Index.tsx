@@ -9,11 +9,19 @@ import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const { toast } = useToast();
+  const [questions, setQuestions] = useState<Record<number, string>>({});
   const [answers, setAnswers] = useState<Record<number, string>>({});
   
   const totalQuestions = 100;
   const answeredQuestions = Object.keys(answers).filter(key => answers[parseInt(key)]?.trim()).length;
   const progress = (answeredQuestions / totalQuestions) * 100;
+
+  const handleQuestionChange = (questionNumber: number, value: string) => {
+    setQuestions(prev => ({
+      ...prev,
+      [questionNumber]: value
+    }));
+  };
 
   const handleAnswerChange = (questionNumber: number, value: string) => {
     setAnswers(prev => ({
@@ -32,9 +40,12 @@ const Index = () => {
       return;
     }
 
-    const resultsText = Object.entries(answers)
-      .sort(([a], [b]) => parseInt(a) - parseInt(b))
-      .map(([num, answer]) => `${num}. ${answer}`)
+    const resultsText = Array.from({ length: totalQuestions }, (_, i) => i + 1)
+      .map(num => {
+        const question = questions[num] || `Вопрос ${num}`;
+        const answer = answers[num] || '';
+        return `${num}. ${question}\nОтвет: ${answer}`;
+      })
       .join('\n\n');
 
     const blob = new Blob([resultsText], { type: 'text/plain' });
@@ -84,15 +95,16 @@ const Index = () => {
               className="p-6 hover:shadow-md transition-shadow animate-fade-in"
               style={{ animationDelay: `${Math.min(num * 20, 500)}ms` }}
             >
-              <label className="block space-y-3">
+              <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <span className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">
                     {num}
                   </span>
                   <Input
                     placeholder={`Вопрос ${num}`}
+                    value={questions[num] || ''}
+                    onChange={(e) => handleQuestionChange(num, e.target.value)}
                     className="flex-1 font-medium"
-                    disabled
                   />
                 </div>
                 <Textarea
@@ -101,7 +113,7 @@ const Index = () => {
                   onChange={(e) => handleAnswerChange(num, e.target.value)}
                   className="min-h-[80px] resize-none"
                 />
-              </label>
+              </div>
             </Card>
           ))}
         </div>
